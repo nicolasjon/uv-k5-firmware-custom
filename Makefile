@@ -213,7 +213,7 @@ ifneq (, $(shell $(WHERE) git))
     	VERSION_STRING := $(shell git rev-parse --short HEAD)
 	endif
 endif
-VERSION_STRING := .21
+VERSION_STRING := .20
 
 
 ASFLAGS = -c -mcpu=cortex-m0
