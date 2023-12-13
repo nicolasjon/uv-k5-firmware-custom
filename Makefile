@@ -204,7 +204,7 @@ endif
 OBJCOPY = arm-none-eabi-objcopy
 SIZE = arm-none-eabi-size
 
-AUTHOR_STRING ?= M1HOG!
+AUTHOR_STRING ?= M1HOG
 # the user might not have/want git installed
 # can set own version string here (max 7 chars)
 ifneq (, $(shell $(WHERE) git))
@@ -213,7 +213,7 @@ ifneq (, $(shell $(WHERE) git))
     	VERSION_STRING := $(shell git rev-parse --short HEAD)
 	endif
 endif
-VERSION_STRING := .20
+VERSION_STRING := .21
 
 
 ASFLAGS = -c -mcpu=cortex-m0
