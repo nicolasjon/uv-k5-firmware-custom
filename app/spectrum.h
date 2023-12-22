@@ -45,9 +45,8 @@ static const uint8_t U8RssiMap[] = {
 };
 
 static const uint16_t scanStepValues[] = {
-    1,   10,  50,  100,
-
-    250, 500, 625, 833, 1000, 1250, 2500, 10000,
+    1, 10, 50, 100, 250, 500, 625, 833, 
+    1000, 1250, 1500, 2000, 2500, 5000, 10000,
 };
 
 static const uint16_t scanStepBWRegValues[] = {
@@ -110,7 +109,10 @@ typedef enum ScanStep {
   S_STEP_8_33kHz,
   S_STEP_10_0kHz,
   S_STEP_12_5kHz,
+  S_STEP_15_0kHz,
+  S_STEP_20_0kHz,
   S_STEP_25_0kHz,
+  S_STEP_50_0kHz,
   S_STEP_100_0kHz,
 } ScanStep;
 
@@ -136,17 +138,17 @@ typedef struct KeyboardState {
 
 typedef struct ScanInfo {
   uint16_t rssi, rssiMin, rssiMax;
-  uint8_t i, iPeak;
+  uint16_t i, iPeak;
   uint32_t f, fPeak;
   uint16_t scanStep;
-  uint8_t measurementsCount;
+  uint16_t measurementsCount;
 } ScanInfo;
 
 typedef struct PeakInfo {
   uint16_t t;
   uint16_t rssi;
   uint32_t f;
-  uint8_t i;
+  uint16_t i;
 } PeakInfo;
 
 void APP_RunSpectrum(void);

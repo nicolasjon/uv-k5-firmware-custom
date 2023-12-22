@@ -14,44 +14,52 @@
  *     limitations under the License.
  */
 
+#include <stdint.h>
 #include <string.h>
 #include <stdio.h>     // NULL
 
 #ifdef ENABLE_AM_FIX
 	#include "am_fix.h"
 #endif
+
+#include "audio.h"
+#include "board.h"
+#include "misc.h"
+#include "radio.h"
+#include "settings.h"
+#include "version.h"
+
 #include "app/app.h"
 #include "app/dtmf.h"
-#include "audio.h"
 #include "bsp/dp32g030/gpio.h"
 #include "bsp/dp32g030/syscon.h"
-#include "board.h"
+
 #include "driver/backlight.h"
 #include "driver/bk4819.h"
 #include "driver/gpio.h"
 #include "driver/system.h"
 #include "driver/systick.h"
-#include "driver/uart.h"
+#ifdef ENABLE_UART
+	#include "driver/uart.h"
+#endif
+
 #include "helper/battery.h"
 #include "helper/boot.h"
-#include "misc.h"
-#include "radio.h"
-#include "settings.h"
+
 #include "ui/lock.h"
 #include "ui/welcome.h"
 #include "ui/menu.h"
-#include "version.h"
-
-void _putchar(char c)
+void _putchar(__attribute__((unused)) char c)
 {
+
+#ifdef ENABLE_UART
 	UART_Send((uint8_t *)&c, 1);
+#endif
+
 }
 
 void Main(void)
 {
-	unsigned int i;
-	BOOT_Mode_t  BootMode;
-
 	// Enable clock gating of blocks we need
 	SYSCON_DEV_CLK_GATE = 0
 		| SYSCON_DEV_CLK_GATE_GPIOA_BITS_ENABLE
@@ -64,13 +72,16 @@ void Main(void)
 		| SYSCON_DEV_CLK_GATE_AES_BITS_ENABLE
 		| SYSCON_DEV_CLK_GATE_PWM_PLUS0_BITS_ENABLE;
 
+
 	SYSTICK_Init();
 	BOARD_Init();
-	UART_Init();
 
 	boot_counter_10ms = 250;   // 2.5 sec
 
+#ifdef ENABLE_UART
+	UART_Init();
 	UART_Send(UART_Version, strlen(UART_Version));
+#endif
 
 	// Not implementing authentic device checks
 
@@ -92,17 +103,17 @@ void Main(void)
 
 	RADIO_SetupRegisters(true);
 
-	for (i = 0; i < ARRAY_SIZE(gBatteryVoltages); i++)
+	for (unsigned int i = 0; i < ARRAY_SIZE(gBatteryVoltages); i++)
 		BOARD_ADC_GetBatteryInfo(&gBatteryVoltages[i], &gBatteryCurrent);
 
 	BATTERY_GetReadings(false);
 
-	#ifdef ENABLE_AM_FIX
-		AM_fix_init();
-	#endif
+#ifdef ENABLE_AM_FIX
+	AM_fix_init();
+#endif
 
-	BootMode = BOOT_GetMode();
-	
+	const BOOT_Mode_t  BootMode = BOOT_GetMode();
+
 	if (BootMode == BOOT_MODE_F_LOCK)
 	{
 		gF_LOCK = true;            // flag to say include the hidden menu items
@@ -124,8 +135,9 @@ void Main(void)
 	{	// keys are pressed
 		UI_DisplayReleaseKeys();
 		BACKLIGHT_TurnOn();
-		i = 0;
-		while (i < 50)  // 500ms
+
+		// 500ms
+		for (int i = 0; i < 50;)
 		{
 			i = (GPIO_CheckBit(&GPIOC->DATA, GPIOC_PIN_PTT) && KEYBOARD_Poll() == KEY_INVALID) ? i + 1 : 0;
 			SYSTEM_DelayMs(10);
@@ -205,24 +217,18 @@ void Main(void)
 #ifdef ENABLE_NOAA
 		RADIO_ConfigureNOAA();
 #endif
-
-		// ******************
 	}
 
-	while (1)
-	{
+	while (true) {
 		APP_Update();
 
-		if (gNextTimeslice)
-		{
-			APP_TimeSlice10ms();
-			gNextTimeslice = false;
-		}
+		if (gNextTimeslice) {
 
-		if (gNextTimeslice_500ms)
-		{
-			APP_TimeSlice500ms();
-			gNextTimeslice_500ms = false;
+			APP_TimeSlice10ms();
+
+			if (gNextTimeslice_500ms) {
+				APP_TimeSlice500ms();
+			}
 		}
 	}
 }
